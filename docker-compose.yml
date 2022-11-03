@@ -4,13 +4,16 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    ports:
-      - 5432:5432
     environment:
-      - POSTGRES_USER=hakro-ll
-      - POSTGRES_PASSWORD=Hakro!1969
+      - "POSTGRES_USER=hakro-ll"
+      - "POSTGRES_PASSWORD=Hakro!1969"
     volumes:
-      - 'postgres_data:/var/lib/postgresql/data'
+      - "postgres_data:/var/lib/postgresql/data"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.tcp.routers.postgres.entrypoints=postgres"
+      - "traefik.tcp.routers.postgres.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.postgres.tls=false"
     networks:
       - hakro-td
 
@@ -21,4 +24,4 @@ volumes:
 networks:
   hakro-td:
     name: hakro-td-network
-    driver: bridge
+    external: true
