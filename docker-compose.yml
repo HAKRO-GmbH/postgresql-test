@@ -3,12 +3,17 @@ version: "3"
 services:
 
   postgres:
-    image: postgres:15-alpine
+    image: bitnami/postgresql:15
+    restart: always
     environment:
-      - "POSTGRES_USER=hakro-ll"
-      - "POSTGRES_PASSWORD=Hakro!1969"
-    volumes:
-      - "postgres_data:/var/lib/postgresql/data"
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_USERNAME=${DB_USERNAME:?}
+      - POSTGRESQL_PASSWORD=${DB_PASSWORD:?}
+      - POSTGRESQL_DATABASE=hakro_test
+      - POSTGRESQL_REPLICATION_USER=${REPLICATION_DB_USERNAME:?}
+      - POSTGRESQL_REPLICATION_PASSWORD=${REPLICATION_DB_PASSWORD:?}
+      - POSTGRESQL_SYNCHRONOUS_COMMIT_MODE=on
+      - POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS=1
     labels:
       - "traefik.enable=true"
       - "traefik.tcp.routers.postgres.entrypoints=postgres"
@@ -16,9 +21,53 @@ services:
       - "traefik.tcp.routers.postgres.tls=false"
     networks:
       - hakro-td
+    volumes:
+      - postgres_data:/bitnami/postgres
+
+  postgres-replication:
+    image: bitnami/postgresql:15
+    restart: always
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_MASTER_HOST=db
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_REPLICATION_USER=${REPLICATION_DB_USERNAME:?}
+      - POSTGRESQL_REPLICATION_PASSWORD=${REPLICATION_DB_PASSWORD:?}
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - hakro-td
+    volumes:
+      - postgres_data-replication:/bitnami/postgres
+    depends_on:
+      - postgres
+
+  pgadmin:
+    image: dpage/pgadmin4:6.15
+    hostname: pgadmin
+    restart: always
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${pguser:?}
+      - PGADMIN_DEFAULT_PASSWORD=${pgadminpass:?}
+      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
+      - PGADMIN_CONFIG_LOGIN_BANNER="HAKRO"
+      - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=10
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    networks:
+      - hakro-td
+    depends_on:
+      - postgres
+      - postgres-replication
+    ports:
+      - "8099:80"
 
 volumes:
   postgres_data:
+    driver: local
+  postgres_data-replication:
+    driver: local
+  pgadmin:
     driver: local
 
 networks:
