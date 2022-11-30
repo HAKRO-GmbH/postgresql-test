@@ -9,7 +9,7 @@ services:
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_USERNAME=${DB_USERNAME:?}
       - POSTGRESQL_PASSWORD=${DB_PASSWORD:?}
-      - POSTGRESQL_DATABASE=hakro_test
+      - POSTGRESQL_DATABASE=hakro-ll
       - POSTGRESQL_REPLICATION_USER=${REPLICATION_DB_USERNAME:?}
       - POSTGRESQL_REPLICATION_PASSWORD=${REPLICATION_DB_PASSWORD:?}
       - POSTGRESQL_SYNCHRONOUS_COMMIT_MODE=on
@@ -29,7 +29,7 @@ services:
     restart: always
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
-      - POSTGRESQL_MASTER_HOST=db
+      - POSTGRESQL_MASTER_HOST=postgres
       - POSTGRESQL_MASTER_PORT_NUMBER=5432
       - POSTGRESQL_REPLICATION_USER=${REPLICATION_DB_USERNAME:?}
       - POSTGRESQL_REPLICATION_PASSWORD=${REPLICATION_DB_PASSWORD:?}
@@ -42,10 +42,8 @@ services:
       - postgres
 
   pgadmin:
-    image: dpage/pgadmin4:6.15
-    hostname: pgadmin
+    image: dpage/pgadmin4:6.16
     restart: always
-    container_name: pgadmin
     environment:
       - PGADMIN_DEFAULT_EMAIL=${pguser:?}
       - PGADMIN_DEFAULT_PASSWORD=${pgadminpass:?}
