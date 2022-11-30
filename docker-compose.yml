@@ -22,7 +22,7 @@ services:
     networks:
       - hakro-td
     volumes:
-      - postgres_data:/bitnami/postgres
+      - postgres_data:/bitnami/postgresql
 
   postgres-replication:
     image: bitnami/postgresql:15
@@ -37,7 +37,7 @@ services:
     networks:
       - hakro-td
     volumes:
-      - postgres_data-replication:/bitnami/postgres
+      - postgres_data-replication:/bitnami/postgresql
     depends_on:
       - postgres
 
