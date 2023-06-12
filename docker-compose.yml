@@ -2,73 +2,77 @@ version: "3"
 
 services:
 
-  postgres:
-    image: bitnami/postgresql:15
+  postgresql:
+    image: bitnami/postgresql:15.3.0
     restart: always
     environment:
       - POSTGRESQL_REPLICATION_MODE=master
       - POSTGRESQL_USERNAME=${DB_USERNAME:?}
       - POSTGRESQL_PASSWORD=${DB_PASSWORD:?}
-      - POSTGRESQL_DATABASE=hakro-ll
+      - POSTGRESQL_DATABASE=hakro-portal
       - POSTGRESQL_REPLICATION_USER=${REPLICATION_DB_USERNAME:?}
       - POSTGRESQL_REPLICATION_PASSWORD=${REPLICATION_DB_PASSWORD:?}
       - POSTGRESQL_SYNCHRONOUS_COMMIT_MODE=on
       - POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS=1
     labels:
       - "traefik.enable=true"
-      - "traefik.tcp.routers.postgres.entrypoints=postgres"
-      - "traefik.tcp.routers.postgres.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.postgres.tls=false"
+      - "traefik.tcp.routers.postgresql.entrypoints=postgresql"
+      - "traefik.tcp.routers.postgresql.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.postgresql.tls=false"
     networks:
-      - hakro-td
+      - hakro-portal
     volumes:
-      - postgres_data:/bitnami/postgresql
+      - postgresql_data:/bitnami/postgresql
 
-  postgres-replication:
-    image: bitnami/postgresql:15
+  postgresql-replication:
+    image: bitnami/postgresql:15.3.0
     restart: always
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
-      - POSTGRESQL_MASTER_HOST=postgres
+      - POSTGRESQL_MASTER_HOST=postgresql
       - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_USERNAME=${DB_USERNAME:?}
+      - POSTGRESQL_PASSWORD=${DB_PASSWORD:?}
       - POSTGRESQL_REPLICATION_USER=${REPLICATION_DB_USERNAME:?}
       - POSTGRESQL_REPLICATION_PASSWORD=${REPLICATION_DB_PASSWORD:?}
-      - ALLOW_EMPTY_PASSWORD=yes
     networks:
-      - hakro-td
+      - hakro-portal
     volumes:
-      - postgres_data-replication:/bitnami/postgresql
+      - postgresql_data-replication:/bitnami/postgresql
     depends_on:
-      - postgres
+      - postgresql
 
   pgadmin:
-    image: dpage/pgadmin4:6.16
+    image: dpage/pgadmin4:7.3
     restart: always
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${pguser:?}
-      - PGADMIN_DEFAULT_PASSWORD=${pgadminpass:?}
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_USERNAME:?}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:?}
       - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
       - PGADMIN_CONFIG_LOGIN_BANNER="HAKRO"
       - PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=10
+      - SCRIPT_NAME=/pgadmin4
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin4.rule=PathPrefix(`/pgadmin4`)"
+      - "traefik.http.routers.pgadmin4.entrypoints=web,websecure"
     volumes:
       - pgadmin:/var/lib/pgadmin
     networks:
-      - hakro-td
+      - hakro-portal
     depends_on:
-      - postgres
-      - postgres-replication
-    ports:
-      - "8099:80"
+      - postgresql
+      - postgresql-replication
 
 volumes:
-  postgres_data:
+  postgresql_data:
     driver: local
-  postgres_data-replication:
+  postgresql_data-replication:
     driver: local
   pgadmin:
     driver: local
 
 networks:
-  hakro-td:
-    name: hakro-td-network
+  hakro-portal:
+    name: hakro-portal-network
     external: true
