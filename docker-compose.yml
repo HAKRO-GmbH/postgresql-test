@@ -14,11 +14,6 @@ services:
       - POSTGRESQL_REPLICATION_PASSWORD=${REPLICATION_DB_PASSWORD:?}
       - POSTGRESQL_SYNCHRONOUS_COMMIT_MODE=on
       - POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS=1
-    labels:
-      - "traefik.enable=true"
-      - "traefik.tcp.routers.postgresql.entrypoints=postgresql"
-      - "traefik.tcp.routers.postgresql.rule=HostSNI(`*`)"
-      - "traefik.tcp.routers.postgresql.tls=false"
     networks:
       - hakro-portal
     volumes:
@@ -55,7 +50,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pgadmin4.rule=PathPrefix(`/pgadmin4`)"
-      - "traefik.http.routers.pgadmin4.entrypoints=web,websecure"
+      - "traefik.http.routers.pgadmin4.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin4.tls=true"
     volumes:
       - pgadmin:/var/lib/pgadmin
     networks:
